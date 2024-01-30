@@ -1,0 +1,14 @@
+{
+  "name": "@jclem/cli",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/cli.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
