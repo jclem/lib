@@ -21,8 +21,19 @@ type ReadIn<F> = ReadRecord | ReadFile<F> | ReadEnv | ReadFn;
 /**
  * A parser for configuration, that can draw from runtime values, the
  * environment, and files.
+ *
+ * @param schema The Zod schema to parse the configuration with
+ * @returns A new configuration parser
  */
-export class ConfigParser<S extends ConfigSchema> {
+export function newParser<S extends ConfigSchema>(schema: S): Parser<S> {
+  return new ConfigParser(schema);
+}
+
+/**
+ * A parser for configuration, that can draw from runtime values, the
+ * environment, and files.
+ */
+class ConfigParser<S extends ConfigSchema> {
   readonly #schema: S;
   readonly #reads: ReadIn<any>[] = [];
 
@@ -112,11 +123,13 @@ export class ConfigParser<S extends ConfigSchema> {
   }
 }
 
+export type Parser<S extends ConfigSchema> = ConfigParser<S>;
+
 /**
  * An async parser for configuration, that can draw from runtime values, the
  * environment, and files.
  */
-export class AsyncConfigParser<S extends ConfigSchema> extends ConfigParser<S> {
+class AsyncConfigParser<S extends ConfigSchema> extends ConfigParser<S> {
   readonly #schema: S;
   readonly #reads: (ReadIn<any> | ReadFnAsync)[];
 
@@ -186,6 +199,8 @@ export class AsyncConfigParser<S extends ConfigSchema> extends ConfigParser<S> {
     return deepMerge(await Promise.all(resolvedReads));
   }
 }
+
+export type AsyncParser<S extends ConfigSchema> = AsyncConfigParser<S>;
 
 function deepMerge(inputs: Record<string, unknown>[]) {
   const output: Record<string, unknown> = {};

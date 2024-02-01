@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import z from "zod";
-import { ConfigParser } from "./config";
+import { newParser } from "./config";
 
 const BasicConfig = z.object({
   string: z.string(),
@@ -19,7 +19,7 @@ const readFile = (path: string) => readFileSync(path).toString();
 it("parses a basic config file", () => {
   const filePath = path.join(import.meta.dir, "../fixtures/config1.json");
 
-  const config = new ConfigParser(BasicConfig)
+  const config = newParser(BasicConfig)
     .readFile(filePath, readFile, JSON.parse)
     .parse();
 
@@ -32,7 +32,7 @@ it("deep-merges multiple configs", () => {
   const config1Path = path.join(import.meta.dir, "../fixtures/config1.json");
   const config2Path = path.join(import.meta.dir, "../fixtures/config2.json");
 
-  const config = new ConfigParser(BasicConfig.extend({ foo: z.string() }))
+  const config = newParser(BasicConfig.extend({ foo: z.string() }))
     .readValue({ foo: "bar", string: "string0" })
     .readFile(config1Path, readFile, JSON.parse)
     .readFile(config2Path, readFile, JSON.parse)
@@ -47,12 +47,12 @@ it("deep-merges multiple configs", () => {
 });
 
 it("reads from the environment", () => {
-  const config = new ConfigParser(z.object({ foo: z.string() }))
+  const config = newParser(z.object({ foo: z.string() }))
     .readEnv({ FOO: "bar" })
     .parse();
   expect(config.foo).toStrictEqual("bar");
 
-  const nestedConfig = new ConfigParser(
+  const nestedConfig = newParser(
     z.object({ foo: z.object({ bar: z.string() }) }),
   )
     .readEnv({ FOO__BAR: "baz" })
@@ -61,7 +61,7 @@ it("reads from the environment", () => {
 });
 
 it("reads from a function", () => {
-  const config = new ConfigParser(z.object({ foo: z.string() }))
+  const config = newParser(z.object({ foo: z.string() }))
     .read(() => ({ foo: "bar" }))
     .parse();
   expect(config.foo).toStrictEqual("bar");
@@ -70,7 +70,7 @@ it("reads from a function", () => {
 it("merges value, file, function, environment", () => {
   const filePath = path.join(import.meta.dir, "../fixtures/config1.json");
 
-  const config = new ConfigParser(BasicConfig.extend({ fnValue: z.string() }))
+  const config = newParser(BasicConfig.extend({ fnValue: z.string() }))
     .readValue({ string: "string from value", number: -1 })
     .readFile(filePath, readFile, JSON.parse)
     .readEnv({ OBJECT__A: "a from env", OBJECT__C: "c from env" })
@@ -84,9 +84,7 @@ it("merges value, file, function, environment", () => {
 });
 
 it("handles camel-cased names in env vars", () => {
-  const config = new ConfigParser(
-    z.object({ fooBar: z.string(), foobar: z.string() }),
-  )
+  const config = newParser(z.object({ fooBar: z.string(), foobar: z.string() }))
     .readEnv({ FOO_BAR: "baz", FOOBAR: "qux" })
     .parse();
 
@@ -95,7 +93,7 @@ it("handles camel-cased names in env vars", () => {
 });
 
 it("handles conflicting property names and object paths", () => {
-  const config = new ConfigParser(
+  const config = newParser(
     z.object({
       fooBar: z.string(),
       foo_bar: z.string(),
@@ -109,7 +107,7 @@ it("handles conflicting property names and object paths", () => {
 });
 
 it("handles preprocessing", () => {
-  const config = new ConfigParser(
+  const config = newParser(
     z.object({
       count: z.preprocess(
         (v) => (typeof v === "string" ? parseInt(v, 10) : v),
@@ -126,9 +124,7 @@ it("handles preprocessing", () => {
 it("parses asynchronously", async () => {
   const path1 = path.join(import.meta.dir, "../fixtures/config1.json");
   const path2 = path.join(import.meta.dir, "../fixtures/config2.json");
-  const config = await new ConfigParser(
-    BasicConfig.extend({ async: z.string() }),
-  )
+  const config = await newParser(BasicConfig.extend({ async: z.string() }))
     .readAsync(async () => Promise.resolve({ async: "yes" }))
     .readFile(path1, readFile, JSON.parse)
     .readFile(path2, readFile, JSON.parse)
@@ -143,9 +139,7 @@ it("parses asynchronously", async () => {
 it("parses asynchronously safely", async () => {
   const path1 = path.join(import.meta.dir, "../fixtures/config1.json");
   const path2 = path.join(import.meta.dir, "../fixtures/config2.json");
-  const result = await new ConfigParser(
-    BasicConfig.extend({ async: z.string() }),
-  )
+  const result = await newParser(BasicConfig.extend({ async: z.string() }))
     .readAsync(async () => Promise.resolve({ async: "yes" }))
     .readFile(path1, readFile, JSON.parse)
     .readFile(path2, readFile, JSON.parse)
@@ -160,7 +154,7 @@ it("parses asynchronously safely", async () => {
 });
 
 it("parses safely", () => {
-  const config = new ConfigParser(z.object({ foo: z.string() }))
+  const config = newParser(z.object({ foo: z.string() }))
     .readValue({ foo: "foo" })
     .safeParse();
 
@@ -169,7 +163,7 @@ it("parses safely", () => {
 });
 
 it("parses safely with an error", () => {
-  const config = new ConfigParser(z.object({ foo: z.string() }))
+  const config = newParser(z.object({ foo: z.string() }))
     .readValue({ foo: 1 })
     .safeParse();
 
@@ -196,7 +190,7 @@ describe("objects", () => {
         format: z.enum(["json", "pretty"]),
       }),
     });
-    const config = new ConfigParser(Config)
+    const config = newParser(Config)
       .readValue({ log: { level: "info", format: "pretty" } })
       .parse();
     expect(config.log.level).toEqual("info");
@@ -213,11 +207,11 @@ describe("objects", () => {
         .default({}),
     });
 
-    let config = new ConfigParser(Config).readValue({}).parse();
+    let config = newParser(Config).readValue({}).parse();
     expect(config.log.level).toEqual("info");
     expect(config.log.format).toEqual("pretty");
 
-    config = new ConfigParser(Config)
+    config = newParser(Config)
       .readValue({ log: { format: "json" } })
       .parse();
 
@@ -235,11 +229,11 @@ describe("objects", () => {
         .default({}),
     });
 
-    let config = new ConfigParser(Config).readEnv({}).parse();
+    let config = newParser(Config).readEnv({}).parse();
     expect(config.log.level).toEqual("info");
     expect(config.log.format).toEqual("pretty");
 
-    config = new ConfigParser(Config).readEnv({ LOG__FORMAT: "json" }).parse();
+    config = newParser(Config).readEnv({ LOG__FORMAT: "json" }).parse();
     expect(config.log.level).toEqual("info");
     expect(config.log.format).toEqual("json");
   });
