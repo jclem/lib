@@ -2,4 +2,4 @@
 
 ## Packages
 
-- [cli]](./packages/cli)
+- [@jclem/cli](./packages/cli)
