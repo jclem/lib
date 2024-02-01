@@ -3,7 +3,9 @@ import { z } from "zod";
 /** A {@link z.ZodObject} schema type used to define configuration */
 export type ConfigSchema = z.ZodObject<z.ZodRawShape>;
 
-type ReadRecord = { type: "record"; value: Record<string, unknown> };
+type ParseTarget = Record<string, unknown>;
+
+type ReadRecord = { type: "record"; value: ParseTarget };
 type ReadFile<F> = {
   type: "file";
   path: string;
@@ -11,10 +13,10 @@ type ReadFile<F> = {
   parse: (contents: F) => unknown;
 };
 type ReadEnv = { type: "env"; env: Dict<string> };
-type ReadFn = { type: "function"; fn: () => Record<string, unknown> };
+type ReadFn = { type: "function"; fn: () => ParseTarget };
 type ReadFnAsync = {
   type: "function-async";
-  fn: () => Promise<Record<string, unknown>>;
+  fn: () => Promise<ParseTarget>;
 };
 type ReadIn<F> = ReadRecord | ReadFile<F> | ReadEnv | ReadFn;
 
@@ -47,7 +49,7 @@ class ConfigParser<S extends ConfigSchema> {
    * @param fn The function to read from
    * @returns this
    */
-  read(fn: () => Record<string, unknown>): this {
+  read(fn: () => ParseTarget): this {
     this.#reads.push({ type: "function", fn });
     return this;
   }
@@ -58,7 +60,7 @@ class ConfigParser<S extends ConfigSchema> {
    * @param fn The async function to read from
    * @returns An async config parser
    */
-  readAsync(fn: () => Promise<Record<string, unknown>>): AsyncConfigParser<S> {
+  readAsync(fn: () => Promise<ParseTarget>): AsyncConfigParser<S> {
     return new AsyncConfigParser(this.#schema, [
       ...this.#reads,
       { type: "function-async", fn },
@@ -98,7 +100,7 @@ class ConfigParser<S extends ConfigSchema> {
    * @param value The value to read
    * @returns this
    */
-  readValue(value: Record<string, unknown>): this {
+  readValue(value: ParseTarget): this {
     this.#reads.push({ type: "record", value });
     return this;
   }
@@ -139,12 +141,12 @@ class AsyncConfigParser<S extends ConfigSchema> extends ConfigParser<S> {
     this.#reads = reads;
   }
 
-  read(fn: () => Record<string, unknown>): this {
+  read(fn: () => ParseTarget): this {
     this.#reads.push({ type: "function", fn });
     return this;
   }
 
-  readAsync(fn: () => Promise<Record<string, unknown>>): this {
+  readAsync(fn: () => Promise<ParseTarget>): this {
     this.#reads.push({ type: "function-async", fn });
     return this;
   }
@@ -163,7 +165,7 @@ class AsyncConfigParser<S extends ConfigSchema> extends ConfigParser<S> {
     return this;
   }
 
-  readValue(value: Record<string, unknown>): this {
+  readValue(value: ParseTarget): this {
     this.#reads.push({ type: "record", value });
     return this;
   }
@@ -202,8 +204,8 @@ class AsyncConfigParser<S extends ConfigSchema> extends ConfigParser<S> {
 
 export type AsyncParser<S extends ConfigSchema> = AsyncConfigParser<S>;
 
-function deepMerge(inputs: Record<string, unknown>[]) {
-  const output: Record<string, unknown> = {};
+function deepMerge(inputs: ParseTarget[]) {
+  const output: ParseTarget = {};
 
   inputs.map((input) => {
     for (const key in input) {
@@ -222,8 +224,6 @@ function deepMerge(inputs: Record<string, unknown>[]) {
 }
 
 function getEnvInput(read: ReadEnv, schema: z.ZodType) {
-  const input: Record<string, unknown> = {};
-
   const readEnvValue = (path: string[]) => {
     const envVarName = path
       .map((segment) =>
@@ -237,45 +237,46 @@ function getEnvInput(read: ReadEnv, schema: z.ZodType) {
     return read.env[envVarName];
   };
 
-  const readEnv = (path: string[], schema: z.ZodType) => {
+  const readEnv = (
+    input: ParseTarget,
+    schema: z.ZodType,
+    path: string[] = [],
+  ): ParseTarget => {
     if (isZodObject(schema)) {
       for (const key in schema.shape) {
-        readEnv([...path, key], schema.shape[key]);
+        readEnv(input, schema.shape[key], [...path, key]);
       }
     } else if (isZodDefault(schema)) {
-      readEnv(path, schema.removeDefault());
+      readEnv(input, schema.removeDefault(), path);
     } else {
       const value = readEnvValue(path);
 
       if (value != null) {
-        let inputPosition = input;
-
-        for (let i = 0; i < path.length; i++) {
-          const key = path[i];
-
+        path.reduce<ParseTarget>((position, key, i) => {
           if (i === path.length - 1) {
-            inputPosition[key] = value;
+            position[key] = value;
+            return position;
           } else {
-            inputPosition[key] ??= {};
+            position[key] ??= {};
 
-            const newPosition = inputPosition[key];
+            const newPosition = position[key];
 
             if (isZodRecord(newPosition)) {
-              inputPosition = newPosition;
+              return newPosition;
             } else {
               throw new Error(
                 `Expected a record at ${path.slice(0, i).join(".")}`,
               );
             }
           }
-        }
+        }, input);
       }
     }
+
+    return input;
   };
 
-  readEnv([], schema);
-
-  return input;
+  return readEnv({}, schema);
 }
 
 function getFileInput(read: ReadFile<unknown>) {
@@ -309,7 +310,7 @@ function gatherSyncInputs(reads: ReadIn<any>[], schema: z.ZodType) {
   return deepMerge(resolvedReads);
 }
 
-function isZodRecord(value: unknown): value is Record<string, unknown> {
+function isZodRecord(value: unknown): value is ParseTarget {
   return z.record(z.string(), z.unknown()).safeParse(value).success;
 }
 
