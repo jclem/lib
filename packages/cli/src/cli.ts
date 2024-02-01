@@ -1,6 +1,6 @@
 export type ParsedArgs = {
   positional: string[];
-  flags: Map<string, (string | boolean)[]>;
+  flags: { [key: string]: undefined | (string | true)[] };
 };
 
 type NullState = { type: "null" };
@@ -10,12 +10,8 @@ type State = NullState | FlagState;
 const nullState = (): NullState => ({ type: "null" });
 const flagState = (flag: string): FlagState => ({ type: "flag", flag });
 
-const addFlagValue = (
-  args: ParsedArgs,
-  flag: string,
-  value: string | boolean,
-) => {
-  const values = args.flags.get(flag) ?? [];
+const addFlagValue = (args: ParsedArgs, flag: string, value: string | true) => {
+  const values = args.flags[flag] ?? [];
   if (
     typeof value === "string" &&
     value.startsWith('"') &&
@@ -24,7 +20,7 @@ const addFlagValue = (
     value = value.slice(1, -1);
   }
   values.push(value);
-  args.flags.set(flag, values);
+  args.flags[flag] = values;
 };
 
 export function parseArgs(args: string[]): ParsedArgs {
@@ -116,7 +112,7 @@ export function parseArgs(args: string[]): ParsedArgs {
     },
     {
       positional: [],
-      flags: new Map(),
+      flags: {},
     },
   );
 }

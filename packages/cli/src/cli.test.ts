@@ -6,7 +6,7 @@ describe(".parseArgs", () => {
     const args = ["foo", "bar"];
     const result = parseArgs(args);
 
-    expect(result).toEqual({ positional: ["foo", "bar"], flags: new Map() });
+    expect(result).toEqual({ positional: ["foo", "bar"], flags: {} });
   });
 
   it("parses --flag=value arguments", () => {
@@ -15,7 +15,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: [],
-      flags: new Map([["foo", ["bar"]]]),
+      flags: { foo: ["bar"] },
     });
   });
 
@@ -25,7 +25,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: [],
-      flags: new Map([["foo", ["bar"]]]),
+      flags: { foo: ["bar"] },
     });
   });
 
@@ -35,7 +35,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: [],
-      flags: new Map([["f", ["bar"]]]),
+      flags: { f: ["bar"] },
     });
   });
 
@@ -45,7 +45,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: [],
-      flags: new Map([["f", ["bar"]]]),
+      flags: { f: ["bar"] },
     });
   });
 
@@ -55,7 +55,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: [],
-      flags: new Map([["f", ["bar"]]]),
+      flags: { f: ["bar"] },
     });
   });
 
@@ -65,7 +65,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: [],
-      flags: new Map([["foo", [true]]]),
+      flags: { foo: [true] },
     });
   });
 
@@ -75,7 +75,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: [],
-      flags: new Map([["f", [true]]]),
+      flags: { f: [true] },
     });
   });
 
@@ -85,7 +85,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: [],
-      flags: new Map([["foo", ["bar", "baz"]]]),
+      flags: { foo: ["bar", "baz"] },
     });
   });
 
@@ -95,7 +95,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: [],
-      flags: new Map([["foo", ["bar", "baz"]]]),
+      flags: { foo: ["bar", "baz"] },
     });
   });
 
@@ -105,7 +105,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: [],
-      flags: new Map([["f", ["bar", "baz"]]]),
+      flags: { f: ["bar", "baz"] },
     });
   });
 
@@ -115,7 +115,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: [],
-      flags: new Map([["f", ["bar", "baz"]]]),
+      flags: { f: ["bar", "baz"] },
     });
   });
 
@@ -125,7 +125,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: [],
-      flags: new Map([["f", ["bar", "baz"]]]),
+      flags: { f: ["bar", "baz"] },
     });
   });
 
@@ -135,7 +135,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: [],
-      flags: new Map([["foo", [true, true]]]),
+      flags: { foo: [true, true] },
     });
   });
 
@@ -145,7 +145,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: [],
-      flags: new Map([["f", [true, true]]]),
+      flags: { f: [true, true] },
     });
   });
 
@@ -155,7 +155,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: [],
-      flags: new Map([["foo", ["bar baz"]]]),
+      flags: { foo: ["bar baz"] },
     });
   });
 
@@ -184,12 +184,7 @@ describe(".parseArgs", () => {
 
     expect(result).toEqual({
       positional: ["0", "1", "2", "3", "4", "5", "6"],
-      flags: new Map([
-        ["a", ["a"]],
-        ["b", ["b", "b2"]],
-        ["c", ["c"]],
-        ["d", ["d", "d2"]],
-      ]),
+      flags: { a: ["a"], b: ["b", "b2"], c: ["c"], d: ["d", "d2"] },
     });
   });
 });
