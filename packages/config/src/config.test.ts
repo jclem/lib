@@ -16,6 +16,34 @@ const BasicConfig = z.object({
 
 const readFile = (path: string) => readFileSync(path).toString();
 
+it("handles complex configurations", () => {
+  const schema = z.object({
+    port: z.coerce.number(),
+    log: z
+      .object({
+        level: z.enum(["debug", "info", "warn", "error"]).default("info"),
+        format: z.enum(["json", "pretty"]).default("pretty"),
+      })
+      .default({}),
+  });
+
+  const config = schema.parse({ port: "3000" });
+
+  expect(config).toStrictEqual({
+    port: 3000,
+    log: { level: "info", format: "pretty" },
+  });
+
+  const parsed = newParser(schema)
+    .readEnv({ PORT: "3000", LOG__LEVEL: "debug" })
+    .parse();
+
+  expect(parsed).toStrictEqual({
+    port: 3000,
+    log: { level: "debug", format: "pretty" },
+  });
+});
+
 it("parses a basic config file", () => {
   const filePath = path.join(import.meta.dir, "../fixtures/config1.json");
 
