@@ -136,6 +136,12 @@ const config = newParser(z.object({ foo: z.object({ bar: z.string() }) }))
 console.log(config.foo.bar); // baz
 ```
 
+Note that like `envReader`, `flatReader` parses the configuration schema and
+pulls values out of the input, rather than simply converting the input to a
+value parsed by the schema. This is because one may not want to use an entire
+runtime environment as an input schema, and because it's also possible to
+generate values on the fly or lazily using getters.
+
 ### Configuration Source Precedence
 
 Config will read configuration input in the order in which they were added to
