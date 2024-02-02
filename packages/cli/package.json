@@ -1,10 +1,29 @@
 {
   "name": "@jclem/cli",
-  "type": "module",
+  "version": "1.0.0",
+  "description": "A utility for parsing command-line arguments",
   "license": "MIT",
+  "author": "Jonathan Clem <j@jclem.me> (https://jclem.me)",
+  "homepage": "https://github.com/jclem/lib/tree/main/packages/cli",
+  "keywords": [
+    "cli"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "directory": "packages/cli",
+    "type": "git",
+    "url": "https://github.com/jclem/lib.git"
+  },
+  "bugs": "https://github.com/jclem/lib/issues",
+  "type": "module",
   "exports": {
     ".": "./src/cli.ts"
   },
+  "files": [
+    "src/*"
+  ],
   "devDependencies": {
     "@types/bun": "latest",
     "zod": "^3.22.4"
