@@ -1,10 +1,30 @@
 {
   "name": "@jclem/config",
-  "type": "module",
+  "version": "5.0.0",
+  "description": "A configuration library for JavaScript runtimes",
   "license": "MIT",
+  "author": "Jonathan Clem <j@jclem.me> (https://jclem.me)",
+  "homepage": "https://github.com/jclem/lib/tree/main/packages/config",
+  "keywords": [
+    "configuration",
+    "zod"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "directory": "packages/config",
+    "type": "git",
+    "url": "https://github.com/jclem/lib.git"
+  },
+  "bugs": "https://github.com/jclem/lib/issues",
+  "type": "module",
   "exports": {
     ".": "./src/config.ts"
   },
+  "files": [
+    "src/*"
+  ],
   "devDependencies": {
     "@types/bun": "latest"
   },
