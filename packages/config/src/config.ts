@@ -1,43 +1,24 @@
 import { z } from "zod";
+import { isZodDefault, isZodObject, isZodRecord } from "./zod";
 
 /** A {@link z.ZodObject} schema type used to define configuration */
 export type ConfigSchema = z.ZodObject<z.ZodRawShape>;
 
+/** A value or promise resolving to a value */
+export type Awaitable<T> = T | Promise<T>;
+
+/** A function that takes a Zod schema and returns an awaitable input to be parsed by that schema */
+export type Reader<S extends ConfigSchema> = (schema: S) => Awaitable<unknown>;
+
 type ParseTarget = Record<string, unknown>;
 
-type ReadRecord = { type: "record"; value: ParseTarget };
-type ReadFile<F> = {
-  type: "file";
-  path: string;
-  read: (path: string) => F;
-  parse: (contents: F) => unknown;
-};
-type ReadEnv = { type: "env"; env: Dict<string> };
-type ReadFn = { type: "function"; fn: () => ParseTarget };
-type ReadFnAsync = {
-  type: "function-async";
-  fn: () => Promise<ParseTarget>;
-};
-type ReadIn<F> = ReadRecord | ReadFile<F> | ReadEnv | ReadFn;
-
-/**
- * A parser for configuration, that can draw from runtime values, the
- * environment, and files.
- *
- * @param schema The Zod schema to parse the configuration with
- * @returns A new configuration parser
- */
-export function newParser<S extends ConfigSchema>(schema: S): Parser<S> {
-  return new ConfigParser(schema);
-}
-
 /**
  * A parser for configuration, that can draw from runtime values, the
  * environment, and files.
  */
-class ConfigParser<S extends ConfigSchema> {
+export class ConfigParser<S extends ConfigSchema> {
   readonly #schema: S;
-  readonly #reads: ReadIn<any>[] = [];
+  readonly #readers: Reader<S>[] = [];
 
   constructor(schema: S) {
     this.#schema = schema;
@@ -46,70 +27,19 @@ class ConfigParser<S extends ConfigSchema> {
   /**
    * Add a function to the parser's read sources.
    *
-   * @param fn The function to read from
+   * @param reader The function to read from
    * @returns this
    */
-  read(fn: () => ParseTarget): this {
-    this.#reads.push({ type: "function", fn });
-    return this;
-  }
-
-  /**
-   * Add an async function to the parser's read sources.
-   *
-   * @param fn The async function to read from
-   * @returns An async config parser
-   */
-  readAsync(fn: () => Promise<ParseTarget>): AsyncConfigParser<S> {
-    return new AsyncConfigParser(this.#schema, [
-      ...this.#reads,
-      { type: "function-async", fn },
-    ]);
-  }
-
-  /**
-   * Add a file to the parser's read sources.
-   *
-   * @param path The path to the file to read
-   * @param read A function to read the file
-   * @param parse A function to parse the file contents
-   * @returns this
-   */
-  readFile<F>(
-    path: string,
-    read: (path: string) => F,
-    parse: (contents: F) => unknown,
-  ): this {
-    this.#reads.push({ type: "file", path, read, parse });
-    return this;
-  }
-
-  /**
-   * Add the environment to the parser's read sources.
-   *
-   * @returns this
-   */
-  readEnv(env: Dict<string>): this {
-    this.#reads.push({ type: "env", env });
-    return this;
-  }
-
-  /**
-   * Add a value to the parser's read sources.
-   *
-   * @param value The value to read
-   * @returns this
-   */
-  readValue(value: ParseTarget): this {
-    this.#reads.push({ type: "record", value });
+  read(reader: Reader<S>): this {
+    this.#readers.push(reader);
     return this;
   }
 
   /**
    * Parse the configuration from the configured read sources.
    */
-  parse(): z.infer<S> {
-    const input = gatherSyncInputs(this.#reads, this.#schema);
+  async parse(): Promise<z.infer<S>> {
+    const input = await gatherInputs(this.#readers, this.#schema);
     return this.#schema.parse(input);
   }
 
@@ -119,137 +49,80 @@ class ConfigParser<S extends ConfigSchema> {
    * Note that only the schema parsing is safe—other errors such as errors
    * thrown by file-readers are not safe.
    */
-  safeParse(): z.SafeParseReturnType<unknown, z.infer<S>> {
-    const input = gatherSyncInputs(this.#reads, this.#schema);
+  async safeParse(): Promise<z.SafeParseReturnType<unknown, z.infer<S>>> {
+    const input = await gatherInputs(this.#readers, this.#schema);
     return this.#schema.safeParse(input);
   }
 }
-
-export type Parser<S extends ConfigSchema> = ConfigParser<S>;
 
 /**
- * An async parser for configuration, that can draw from runtime values, the
- * environment, and files.
+ * Create a reader that reads from the given environment.
+ *
+ * Paths to configuration keys are converted to uppercase snake case, and nested
+ * paths are separated by double underscores.
+ *
+ * @param env The environment to read from (a flat dictionary of string keys to string values)
+ * @returns A reader function that reads from the environment
  */
-class AsyncConfigParser<S extends ConfigSchema> extends ConfigParser<S> {
-  readonly #schema: S;
-  readonly #reads: (ReadIn<any> | ReadFnAsync)[];
-
-  constructor(schema: S, reads: (ReadIn<any> | ReadFnAsync)[]) {
-    super(schema);
-    this.#schema = schema;
-    this.#reads = reads;
-  }
-
-  read(fn: () => ParseTarget): this {
-    this.#reads.push({ type: "function", fn });
-    return this;
-  }
-
-  readAsync(fn: () => Promise<ParseTarget>): this {
-    this.#reads.push({ type: "function-async", fn });
-    return this;
-  }
-
-  readFile<F>(
-    path: string,
-    read: (path: string) => F,
-    parse: (contents: F) => unknown,
-  ): this {
-    this.#reads.push({ type: "file", path, read, parse });
-    return this;
-  }
-
-  readEnv(env: Dict<string>): this {
-    this.#reads.push({ type: "env", env });
-    return this;
-  }
-
-  readValue(value: ParseTarget): this {
-    this.#reads.push({ type: "record", value });
-    return this;
-  }
-
-  parse(): never {
-    throw new Error("Cannot call `parse` on an async config parser");
-  }
-
-  async parseAsync(): Promise<z.infer<S>> {
-    const input = await this.#gatherInputs();
-    return this.#schema.parse(input);
-  }
-
-  safeParse(): never {
-    throw new Error("Cannot call `safeParse` on an async config parser");
-  }
-
-  async safeParseAsync(): Promise<z.SafeParseReturnType<unknown, z.infer<S>>> {
-    const input = await this.#gatherInputs();
-    return this.#schema.safeParse(input);
-  }
-
-  async #gatherInputs() {
-    const resolvedReads = this.#reads.map(async (read) => {
-      switch (read.type) {
-        case "function-async":
-          return await read.fn();
-        default:
-          return gatherSyncInputs([read], this.#schema);
-      }
-    });
-
-    return deepMerge(await Promise.all(resolvedReads));
-  }
-}
-
-export type AsyncParser<S extends ConfigSchema> = AsyncConfigParser<S>;
-
-function deepMerge(inputs: ParseTarget[]) {
-  const output: ParseTarget = {};
-
-  inputs.map((input) => {
-    for (const key in input) {
-      const inputValue = input[key];
-      const outputValue = output[key];
-
-      if (isZodRecord(inputValue) && isZodRecord(outputValue)) {
-        output[key] = deepMerge([outputValue, inputValue]);
-      } else {
-        output[key] = inputValue;
-      }
-    }
-  });
-
-  return output;
-}
-
-function getEnvInput(read: ReadEnv, schema: z.ZodType) {
-  const readEnvValue = (path: string[]) => {
-    const envVarName = path
+export function envReader<S extends ConfigSchema>(
+  env: Dict<unknown>,
+): Reader<S> {
+  return flatReader(env, (path: string[]) =>
+    path
       .map((segment) =>
         segment
           .split(/(?=[A-Z])/)
           .map((part) => part.toUpperCase())
           .join("_"),
       )
-      .join("__");
+      .join("__"),
+  );
+}
 
-    return read.env[envVarName];
+/**
+ * Create a reader that just reads the given value.
+ *
+ * @param value The value to read
+ * @returns A reader function that reads the value
+ */
+export function valueReader<S extends ConfigSchema>(value: unknown): Reader<S> {
+  return () => value;
+}
+
+/**
+ * Read values from keys in a flat dictionary.
+ *
+ * @param record The record to read from
+ * @param pathToKey A function that converts a path to a key
+ * @returns A reader function that reads from the record
+ */
+export function flatReader<S extends ConfigSchema>(
+  record: Dict<unknown>,
+  pathToKey: (path: string[]) => string,
+): Reader<S> {
+  return (schema) => {
+    return readFlatRecord(record, schema, pathToKey);
   };
+}
 
-  const readEnv = (
+function readFlatRecord<S extends ConfigSchema>(
+  env: Dict<unknown>,
+  schema: S,
+  pathToKey: (path: string[]) => string,
+) {
+  const readInput = (
     input: ParseTarget,
     schema: z.ZodType,
     path: string[] = [],
   ): ParseTarget => {
     if (isZodObject(schema)) {
       for (const key in schema.shape) {
-        readEnv(input, schema.shape[key], [...path, key]);
+        readInput(input, schema.shape[key], [...path, key]);
       }
     } else if (isZodDefault(schema)) {
-      readEnv(input, schema.removeDefault(), path);
+      readInput(input, schema.removeDefault(), path);
     } else {
-      const value = readEnvValue(path);
+      const value = env[pathToKey(path)];
 
       if (value != null) {
         path.reduce<ParseTarget>((position, key, i) => {
@@ -276,48 +149,45 @@ function getEnvInput(read: ReadEnv, schema: z.ZodType) {
     return input;
   };
 
-  return readEnv({}, schema);
+  return readInput({}, schema);
 }
 
-function getFileInput(read: ReadFile<unknown>) {
-  const input = read.parse(read.read(read.path));
+async function gatherInputs<S extends ConfigSchema>(
+  reads: Reader<S>[],
+  schema: S,
+) {
+  const resolvedReads = await Promise.all(
+    reads.map(async (read) => {
+      const resolved = await read(schema);
 
-  if (!isZodRecord(input)) {
-    throw new Error(
-      `Failed to parse file at ${
-        read.path
-      } into a record with string keys (got ${typeof input})`,
-    );
-  }
+      if (!isZodRecord(resolved)) {
+        throw new Error(
+          "Expected reader to return a record with string keys, but got something else.",
+        );
+      }
 
-  return input;
-}
-
-function gatherSyncInputs(reads: ReadIn<any>[], schema: z.ZodType) {
-  const resolvedReads = reads.map((read) => {
-    switch (read.type) {
-      case "env":
-        return getEnvInput(read, schema);
-      case "file":
-        return getFileInput(read);
-      case "function":
-        return read.fn();
-      case "record":
-        return read.value;
-    }
-  });
+      return resolved;
+    }),
+  );
 
   return deepMerge(resolvedReads);
 }
 
-function isZodRecord(value: unknown): value is ParseTarget {
-  return z.record(z.string(), z.unknown()).safeParse(value).success;
-}
+function deepMerge(inputs: ParseTarget[]) {
+  const output: ParseTarget = {};
 
-function isZodObject(value: unknown): value is z.ZodObject<z.ZodRawShape> {
-  return value instanceof z.ZodObject;
-}
+  inputs.map((input) => {
+    for (const key in input) {
+      const inputValue = input[key];
+      const outputValue = output[key];
 
-function isZodDefault(value: unknown): value is z.ZodDefault<z.ZodType> {
-  return value instanceof z.ZodDefault;
+      if (isZodRecord(inputValue) && isZodRecord(outputValue)) {
+        output[key] = deepMerge([outputValue, inputValue]);
+      } else {
+        output[key] = inputValue;
+      }
+    }
+  });
+
+  return output;
 }

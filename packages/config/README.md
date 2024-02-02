@@ -16,11 +16,11 @@ $ bun add @jclem/config
 ```
 
 ```typescript
-import { newParser } from "@jclem/config";
+import { ConfigParser, envReader } from "@jclem/config";
 import z from "zod";
 
-process.env["DATABASE__URL"] = "mysql://localhost:3306/mydb";
-process.env["DATABASE__POOL_SIZE"] = "10";
+Bun.env["DATABASE__URL"] = "mysql://localhost:3306/mydb";
+Bun.env["DATABASE__POOL_SIZE"] = "10";
 
 // Define a configuration schema using Zod.
 const Config = z.object({
@@ -33,7 +33,7 @@ const Config = z.object({
   }),
 });
 
-export const config = newParser(Config).readEnv(Bun.env).parse();
+export const config = new ConfigParser(Config).read(envReader(Bun.env)).parse();
 
 console.log(config.database.url); // mysql://localhost:3306/mydb
 console.log(config.database.poolSize); // 10
@@ -43,53 +43,46 @@ console.log(config.database.poolSize); // 10
 
 #### Reading a Raw Value
 
-Config can read configuration input from a raw value by calling `readValue`:
+Config can read configuration input from a raw value by returning it from a
+reader function:
 
 ```typescript
-import { newParser } from "@jclem/config";
+import { ConfigParser } from "@jclem/config";
 
-const config = newParser(z.object({ foo: z.string() }))
-  .readValue({ foo: "bar" })
+const config = new ConfigParser(z.object({ foo: z.string() }))
+  .read(() => ({ foo: "bar" }))
   .parse();
 
 console.log(config.foo); // bar
 ```
 
-#### Reading a Configuration File
-
-Config can read configuration input from a JSON file by calling `readFile`:
+A shortcut for this common case is to use `valueReader`:
 
 ```typescript
-import { newParser } from "@jclem/config";
+import { ConfigParser, valueReader } from "@jclem/config";
+
+const config = new ConfigParser(z.object({ foo: z.string() }))
+  .read(valueReader({ foo: "bar" }))
+  .parse();
+
+console.log(config.foo); // bar
+```
+
+#### Reading a File
+
+Config can read a file by passing a file reader to `read`:
+
+```typescript
+import { ConfigParser } from "@jclem/config";
 import { readFileSync } from "node:fs";
 
 // config.json
 // {"foo": "bar"}
 
-const readFile = (path: string) => readFileSync(path).toString();
+const fileReader = (filePath: string) => () => Bun.file(filePath).json();
 
-const config = newParser(z.object({ foo: z.string() }))
-  .readFile("config.json", readFile, JSON.parse)
-  .parse();
-
-console.log(config.foo); // bar
-```
-
-A non-JSON file can also be read by supplying a tuple containing a file path and
-a parser function with the signature `(data: Buffer) => unknown`:
-
-```typescript
-import { newParser } from "@jclem/config";
-import { load as yamlParse } from "js-yaml";
-import { readFileSync } from "node:fs";
-
-// config.yaml
-// foo: bar
-
-const readFile = (path: string) => readFileSync(path).toString();
-
-const config = newParser(z.object({ foo: z.string() }))
-  .readFile("config.yaml", readFile, yamlParse)
+const config = new ConfigParser(z.object({ foo: z.string() }))
+  .read(fileReader("config.json"))
   .parse();
 
 console.log(config.foo); // bar
@@ -98,39 +91,59 @@ console.log(config.foo); // bar
 #### Reading the Environment
 
 Config can read configuration input from environment variables by calling
-`readEnv`:
+`envReader`:
 
 ```typescript
-import { newParser } from "@jclem/config";
+import { ConfigParser, envReader } from "@jclem/config";
 
 Bun.env.FOO = "bar";
 
 const config = newParser(z.object({ foo: z.string() }))
-  .readEnv(Bun.env)
+  .read(envReader(Bun.env))
   .parse();
 
 console.log(config.foo); // bar
 ```
 
-Note that currently, Config converts schema paths to double-underscore-separated
+Note that `envReader` converts schema paths to double-underscore-separated
 uppercased environment variable names. So, for example, the schema path
 `database.url` would be converted to the environment variable `DATABASE__URL`
 and the schema path `database.poolSize` would be converted to the environment
 variable `DATABASE__POOL_SIZE` (capital letters imply a single-underscore
 separation).
 
-Note that this means that a schema with both `database.url` and `database__url`
-will have both values populated from the same environment variable,
-`DATABASE__URL`.
+This means that a schema with both `database.url` and `database__url` will have
+both values populated from the same environment variable, `DATABASE__URL`.
+
+It's relatively straightforward to create a custom reader that converts paths to
+keys in a different way (for example, to parse command-line flags).
+
+Config provides a function `flatReader` to easily create a custom reader for
+these common scenarios. It accepts what it expects to be a flat dictionary of
+string keys to values and a function that converts schema property paths to keys
+in the dictionary:
+
+```typescript
+import { ConfigParser, flatReader } from "@jclem/config";
+
+// Converts a path to a flag name (`["foo", "bar"]` -> `"foo-bar"`).
+const pathToFlag = (path: string[]) => path.join("-");
+
+const config = newParser(z.object({ foo: z.object({ bar: z.string() }) }))
+  .read(flatReader({ "foo-bar": "baz" }, pathToFlag))
+  .parse();
+
+console.log(config.foo.bar); // baz
+```
 
 ### Configuration Source Precedence
 
-Config will read configuration input in the order in which there were added to
-the config, with later sources taking precedence over earlier sources. For
+Config will read configuration input in the order in which they were added to
+the config, with later readers taking precedence over earlier readers. For
 example:
 
 ```typescript
-import { newParser } from "@jclem/config";
+import { ConfigParser, envReader, valueReader } from "@jclem/config";
 
 const Schema = z.object({
   a: z.string(),
@@ -145,10 +158,12 @@ const value = { a: "a", b: "b", c: "c" };
 
 Bun.env.C = "c from env";
 
-const config = newParser(Schema)
-  .readValue(value)
-  .readFile("config.json", readFile, JSON.parse)
-  .readEnv(Bun.env)
+const fileReader = (filePath: string) => () => Bun.file(filePath).json();
+
+const config = new ConfigParser(Schema)
+  .read(valueReader(value))
+  .read(fileReader("config.json"))
+  .read(envReader(Bun.env))
   .parse();
 
 console.log(config.a); // a
