@@ -6,5 +6,6 @@ TypeScript (not compiled to JavaScript).
 
 ## Packages
 
+- [@jclem/assert](./packages/assert)
 - [@jclem/cli](./packages/cli)
 - [@jclem/config](./packages/config)
