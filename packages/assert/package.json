@@ -1,6 +1,6 @@
 {
   "name": "@jclem/assert",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "A collection of commonly-used assertion functions",
   "license": "MIT",
   "author": "Jonathan Clem <j@jclem.me> (https://jclem.me)",
