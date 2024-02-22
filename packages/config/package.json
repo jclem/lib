@@ -1,6 +1,6 @@
 {
   "name": "@jclem/config",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "A configuration library for JavaScript runtimes",
   "license": "MIT",
   "author": "Jonathan Clem <j@jclem.me> (https://jclem.me)",
