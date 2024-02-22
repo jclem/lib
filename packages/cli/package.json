@@ -17,15 +17,27 @@
     "url": "https://github.com/jclem/lib.git"
   },
   "bugs": "https://github.com/jclem/lib/issues",
-  "type": "module",
   "exports": {
-    ".": "./src/cli.ts"
+    ".": {
+      "import": "./dist/esm/cli.js",
+      "require": "./dist/cjs/cli.js"
+    }
   },
+  "types": "./dist/esm/cli.d.ts",
   "files": [
-    "src/*"
+    "dist/*"
+  ],
+  "scripts": {
+    "build": "konk run c -cgL -n'build:*'",
+    "build:esm": "tsc --outDir dist/esm --module esnext",
+    "build:cjs": "tsc --outDir dist/cjs --module commonjs --moduleResolution node --verbatimModuleSyntax false --declaration false"
+  },
+  "trustedDependencies": [
+    "konk"
   ],
   "devDependencies": {
     "@types/bun": "latest",
+    "konk": "^0.27.1",
     "zod": "^3.22.4"
   },
   "peerDependencies": {

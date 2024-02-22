@@ -3,7 +3,9 @@
   "private": true,
   "scripts": {
     "build": "konk run c -cgL -n'build:*'",
-    "build:assert": "bun run --cwd packages/assert build"
+    "build:assert": "bun run --cwd packages/assert build",
+    "build:cli": "bun run --cwd packages/cli build",
+    "build:config": "bun run --cwd packages/config build"
   },
   "workspaces": [
     "packages/*"
