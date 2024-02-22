@@ -1,11 +1,19 @@
 {
   "name": "@jclem/lib",
   "private": true,
+  "scripts": {
+    "build": "konk run c -cgL -n'build:*'",
+    "build:assert": "bun run --cwd packages/assert build"
+  },
   "workspaces": [
     "packages/*"
   ],
+  "trustedDependencies": [
+    "konk"
+  ],
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "konk": "^0.27.1"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
