@@ -29,7 +29,7 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "konk run c -cgL -n'build:*'",
+    "build": "rm -r dist; konk run c -cgL -n'build:*'",
     "build:esm": "tsc --outDir dist/esm --module esnext",
     "build:cjs": "tsc --outDir dist/cjs --module commonjs --moduleResolution node --verbatimModuleSyntax false --declaration false"
   },
