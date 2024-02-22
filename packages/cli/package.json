@@ -1,6 +1,6 @@
 {
   "name": "@jclem/cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A utility for parsing command-line arguments",
   "license": "MIT",
   "author": "Jonathan Clem <j@jclem.me> (https://jclem.me)",
