@@ -1,6 +1,6 @@
 {
   "name": "@jclem/assert",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "description": "A collection of commonly-used assertion functions",
   "license": "MIT",
   "author": "Jonathan Clem <j@jclem.me> (https://jclem.me)",
@@ -17,7 +17,6 @@
     "url": "https://github.com/jclem/lib.git"
   },
   "bugs": "https://github.com/jclem/lib/issues",
-  "type": "module",
   "exports": {
     ".": {
       "import": "./dist/esm/assert.js",
