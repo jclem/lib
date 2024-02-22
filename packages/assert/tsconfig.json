@@ -6,7 +6,6 @@
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
-    "outDir": "dist",
     "declaration": true,
 
     /* Bundler mode */
@@ -20,5 +19,5 @@
     "forceConsistentCasingInFileNames": true
   },
 
-  "exclude": ["**/*/*.test.ts"]
+  "exclude": ["dist/*", "**/*/*.test.ts"]
 }
