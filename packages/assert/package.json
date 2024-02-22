@@ -1,6 +1,6 @@
 {
   "name": "@jclem/assert",
-  "version": "3.0.5",
+  "version": "3.0.6",
   "description": "A collection of commonly-used assertion functions",
   "license": "MIT",
   "author": "Jonathan Clem <j@jclem.me> (https://jclem.me)",
@@ -23,13 +23,14 @@
       "require": "./dist/cjs/assert.js"
     }
   },
+  "types": "./dist/esm/assert.d.ts",
   "files": [
     "dist/*"
   ],
   "scripts": {
     "build": "konk run c -cgL -n'build:*'",
     "build:esm": "tsc --outDir dist/esm --module esnext",
-    "build:cjs": "tsc --outDir dist/cjs --module commonjs --moduleResolution node --verbatimModuleSyntax false"
+    "build:cjs": "tsc --outDir dist/cjs --module commonjs --moduleResolution node --verbatimModuleSyntax false --declaration false"
   },
   "trustedDependencies": [
     "konk"
