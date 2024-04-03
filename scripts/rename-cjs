@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -e
+
+cjsdir=$(pwd)/dist/cjs
+
+for file in $(find $cjsdir -name "*.js"); do
+  mv $file ${file%.js}.cjs
+done

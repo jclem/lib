@@ -1,6 +1,7 @@
 {
   "name": "@jclem/cli",
   "version": "1.0.1",
+  "type": "module",
   "description": "A utility for parsing command-line arguments",
   "license": "MIT",
   "author": "Jonathan Clem <j@jclem.me> (https://jclem.me)",
@@ -20,7 +21,7 @@
   "exports": {
     ".": {
       "import": "./dist/esm/cli.js",
-      "require": "./dist/cjs/cli.js"
+      "require": "./dist/cjs/cli.cjs"
     }
   },
   "types": "./dist/esm/cli.d.ts",
@@ -30,7 +31,7 @@
   "scripts": {
     "build": "rm -r dist; konk run c -cgL -n'build:*'",
     "build:esm": "tsc --outDir dist/esm --module esnext",
-    "build:cjs": "tsc --outDir dist/cjs --module commonjs --moduleResolution node --verbatimModuleSyntax false --declaration false"
+    "build:cjs": "tsc --outDir dist/cjs --module commonjs --moduleResolution node --verbatimModuleSyntax false --declaration false && ../../scripts/rename-cjs"
   },
   "trustedDependencies": [
     "konk"

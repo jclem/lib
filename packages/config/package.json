@@ -1,6 +1,7 @@
 {
   "name": "@jclem/config",
   "version": "5.0.1",
+  "type": "module",
   "description": "A configuration library for JavaScript runtimes",
   "license": "MIT",
   "author": "Jonathan Clem <j@jclem.me> (https://jclem.me)",
@@ -21,7 +22,7 @@
   "exports": {
     ".": {
       "import": "./dist/esm/config.js",
-      "require": "./dist/cjs/config.js"
+      "require": "./dist/cjs/config.cjs"
     }
   },
   "types": "./dist/esm/config.d.ts",
@@ -31,7 +32,7 @@
   "scripts": {
     "build": "rm -r dist; konk run c -cgL -n'build:*'",
     "build:esm": "tsc --outDir dist/esm --module esnext",
-    "build:cjs": "tsc --outDir dist/cjs --module commonjs --moduleResolution node --verbatimModuleSyntax false --declaration false"
+    "build:cjs": "tsc --outDir dist/cjs --module commonjs --moduleResolution node --verbatimModuleSyntax false --declaration false && ../../scripts/rename-cjs"
   },
   "trustedDependencies": [
     "konk"
