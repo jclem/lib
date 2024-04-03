@@ -1,6 +1,6 @@
 {
   "name": "@jclem/config",
-  "version": "5.0.2",
+  "version": "5.0.3",
   "type": "module",
   "description": "A configuration library for JavaScript runtimes",
   "license": "MIT",
@@ -19,19 +19,13 @@
     "url": "https://github.com/jclem/lib.git"
   },
   "bugs": "https://github.com/jclem/lib/issues",
-  "exports": {
-    ".": {
-      "import": "./dist/esm/config.js",
-      "require": "./dist/cjs/config.cjs"
-    }
-  },
   "types": "./dist/esm/config.d.ts",
   "files": [
     "dist/*"
   ],
   "scripts": {
     "build": "rm -r dist; konk run c -cgL -n'build:*'",
-    "build:esm": "tsc --outDir dist/esm --module esnext",
+    "build:esm": "tsc --outDir dist/esm",
     "build:cjs": "tsc --outDir dist/cjs --module commonjs --moduleResolution node --verbatimModuleSyntax false --declaration false && ../../scripts/rename-cjs"
   },
   "trustedDependencies": [

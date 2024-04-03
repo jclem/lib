@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isZodDefault, isZodObject, isZodRecord } from "./zod";
+import { isZodDefault, isZodObject, isZodRecord } from "./zod.js";
 
 /** A {@link z.ZodObject} schema type used to define configuration */
 export type ConfigSchema = z.ZodObject<z.ZodRawShape>;

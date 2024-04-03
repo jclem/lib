@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import * as path from "node:path";
 import z from "zod";
-import { ConfigParser, envReader, flatReader, valueReader } from "./config";
+import { ConfigParser, envReader, flatReader, valueReader } from "./config.js";
 
 const BasicConfig = z.object({
   string: z.string(),

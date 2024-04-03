@@ -2,14 +2,13 @@
   "compilerOptions": {
     "lib": ["ESNext"],
     "target": "ESNext",
-    "module": "ESNext",
-    "moduleDetection": "force",
+    "module": "NodeNext",
     "jsx": "react-jsx",
     "allowJs": true,
     "declaration": true,
 
     /* Bundler mode */
-    "moduleResolution": "bundler",
+    "moduleResolution": "NodeNext",
     "verbatimModuleSyntax": true,
 
     /* Linting */
