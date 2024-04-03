@@ -1,6 +1,6 @@
 {
   "name": "@jclem/cli",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "type": "module",
   "description": "A utility for parsing command-line arguments",
   "license": "MIT",
@@ -30,7 +30,7 @@
   ],
   "scripts": {
     "build": "rm -r dist; konk run c -cgL -n'build:*'",
-    "build:esm": "tsc --outDir dist/esm --module esnext",
+    "build:esm": "tsc --outDir dist/esm",
     "build:cjs": "tsc --outDir dist/cjs --module commonjs --moduleResolution node --verbatimModuleSyntax false --declaration false && ../../scripts/rename-cjs"
   },
   "trustedDependencies": [

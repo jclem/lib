@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { parseArgs } from "./cli";
+import { parseArgs } from "./cli.js";
 
 describe(".parseArgs", () => {
   it("parses positional arguments", () => {

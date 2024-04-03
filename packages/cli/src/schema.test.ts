@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { z } from "zod";
-import { parseArgs } from "./cli";
+import { parseArgs } from "./cli.js";
 
 const string = z.tuple([z.string()]).transform(([v]) => v);
 const boolean = z.tuple([z.boolean()]).transform(([v]) => v);
