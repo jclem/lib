@@ -5,7 +5,7 @@ import {
   assertInstance,
   assertString,
   assertType,
-} from "./assert";
+} from "./assert.js";
 
 describe("assert", () => {
   test("passes with a defined value", () => {
