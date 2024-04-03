@@ -1,6 +1,6 @@
 {
   "name": "@jclem/cli",
-  "version": "1.0.1",
+  "version": "1.0.8",
   "type": "module",
   "description": "A utility for parsing command-line arguments",
   "license": "MIT",
