@@ -19,6 +19,12 @@
     "url": "https://github.com/jclem/lib.git"
   },
   "bugs": "https://github.com/jclem/lib/issues",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/config.js",
+      "require": "./dist/cjs/config.cjs"
+    }
+  },
   "types": "./dist/esm/config.d.ts",
   "files": [
     "dist/*"
