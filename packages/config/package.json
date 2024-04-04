@@ -1,6 +1,6 @@
 {
   "name": "@jclem/config",
-  "version": "5.0.3",
+  "version": "5.0.4",
   "type": "module",
   "description": "A configuration library for JavaScript runtimes",
   "license": "MIT",
