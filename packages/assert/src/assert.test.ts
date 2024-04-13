@@ -3,6 +3,7 @@ import {
   assert,
   assertEquals,
   assertInstance,
+  assertPredicate,
   assertString,
   assertType,
 } from "./assert.js";
@@ -157,5 +158,30 @@ describe("assertEquals", () => {
 
   test("fails with non-equal values", () => {
     expect(() => assertEquals(1, 2)).toThrow("Values are not equal");
+  });
+});
+
+type OddNum = number & { __odd: true };
+
+const OddNum = (value: unknown): OddNum => {
+  if (isOddNum(value)) {
+    return value as OddNum;
+  } else {
+    throw new Error("value is not odd");
+  }
+};
+
+const isOddNum = (value: unknown): value is OddNum =>
+  typeof value === "number" && value % 2 === 1;
+
+describe("assertPredicate", () => {
+  test("passes when the predicate matches", () => {
+    expect(assertPredicate(1, isOddNum)).toBe(OddNum(1));
+  });
+
+  test("fails when the predicate does not match", () => {
+    expect(() => assertPredicate(2, isOddNum)).toThrow(
+      "Value does not match predicate",
+    );
   });
 });

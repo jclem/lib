@@ -103,3 +103,23 @@ export function assertEquals<T>(
 
   return val2;
 }
+
+/**
+ * Assert that `value` matches the given predicate.
+ *
+ * @param value The value to assert matches the predicate
+ * @param predicate The predicate to assert the value matches
+ * @param message An error message for the thrown error if `value` does not match the predicate
+ * @returns The value
+ */
+export function assertPredicate<T>(
+  value: unknown,
+  predicate: (value: unknown) => value is T,
+  message = "Value does not match predicate",
+): T {
+  if (!predicate(value)) {
+    throw new Error(message);
+  }
+
+  return value;
+}
