@@ -12,7 +12,7 @@ import {
   unwrapEither,
   unwrapOption,
   unwrapResult,
-} from "./result";
+} from "./result.js";
 
 describe("Either", () => {
   describe("Left", () => {
