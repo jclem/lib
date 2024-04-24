@@ -1,0 +1,46 @@
+{
+  "name": "@jclem/result",
+  "version": "4.0.0",
+  "type": "module",
+  "description": "A utility for safely handling errors without try/catch",
+  "license": "MIT",
+  "author": "Jonathan Clem <j@jclem.me> (https://jclem.me)",
+  "homepage": "https://github.com/jclem/lib/tree/main/packages/result",
+  "keywords": [
+    "result"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "directory": "packages/result",
+    "type": "git",
+    "url": "https://github.com/jclem/lib.git"
+  },
+  "bugs": "https://github.com/jclem/lib/issues",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/result.js",
+      "require": "./dist/cjs/result.cjs"
+    }
+  },
+  "types": "./dist/esm/result.d.ts",
+  "files": [
+    "dist/*"
+  ],
+  "scripts": {
+    "build": "rm -r dist; konk run c -cgL -n'build:*'",
+    "build:esm": "tsc --outDir dist/esm",
+    "build:cjs": "tsc --outDir dist/cjs --module commonjs --moduleResolution node --verbatimModuleSyntax false --declaration false && ../../scripts/rename-cjs"
+  },
+  "trustedDependencies": [
+    "konk"
+  ],
+  "devDependencies": {
+    "@types/bun": "latest",
+    "konk": "^0.27.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
